@@ -239,9 +239,19 @@ window.matchMedia || (window.matchMedia = function (win) {
                 typeList    = ['screen', 'print', 'speech', 'projection', 'handheld', 'tv', 'braille', 'embossed', 'tty'],
                 typeIndex   = 0,
                 typeLength  = typeList.length,
-                cssText     = '#mediamatchjs { position: relative; z-index: 0; }',
-                eventPrefix = '',
-                addEvent    = win.addEventListener || (eventPrefix = 'on') && win.attachEvent;
+                cssText     = '#mediamatchjs { position: relative; z-index: 0; }';
+
+            var addEvent = function ( obj, type, fn ) {
+                if ( obj.attachEvent ) {
+                    obj['e'+type+fn] = fn;
+                    obj[type+fn] = function () {
+                        obj['e'+type+fn]( window.event );
+                    };
+                    obj.attachEvent( 'on'+type, obj[type+fn] );
+                } else {
+                    obj.addEventListener( type, fn, false );
+                }
+            };
 
             style.type  = 'text/css';
             style.id    = 'mediamatchjs';
@@ -249,7 +259,7 @@ window.matchMedia || (window.matchMedia = function (win) {
             head.appendChild(style);
 
             // Must be placed after style is inserted into the DOM for IE
-            info = (win.getComputedStyle && win.getComputedStyle(style)) || style.currentStyle;
+            info = (win.getComputedStyle && win.getComputedStyle(style, null)) || style.currentStyle;
 
             // Create media blocks to test for media type
             for ( ; typeIndex < typeLength; typeIndex++) {
@@ -271,8 +281,8 @@ window.matchMedia || (window.matchMedia = function (win) {
             _setFeature();
 
             // Set up listeners
-            addEvent(eventPrefix + 'resize', _watch);
-            addEvent(eventPrefix + 'orientationchange', _watch);
+            addEvent( win, 'resize', _watch );
+            addEvent( win, 'orientationchange', _watch );
         };
 
     _init();
